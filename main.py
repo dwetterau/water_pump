@@ -23,15 +23,15 @@ def main():
     res = at.get(table_name)
 
     records = res["records"]
-    pump = records[0]
-    fields = pump["fields"]
+    pump_record = records[0]
+    fields = pump_record["fields"]
     state = fields.get("State", "Idle")
 
     if state == "Pump":
         print("Commanded to pump. Starting...")
         pump()
         print("Done!")
-        at.update(table_name, pump["id"], {"State": "Done"})
+        at.update(table_name, pump_record["id"], {"State": "Done"})
 
 if __name__ == "__main__":
     main()
