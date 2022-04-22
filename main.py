@@ -29,7 +29,7 @@ def main():
 
     if state == "Pump":
         print("Commanded to pump. Starting...")
-        # TODO: Start pumping async...
+        pump()
         print("Done!")
         at.update(table_name, pump["id"], {"State": "Done"})
 
