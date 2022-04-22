@@ -1,5 +1,6 @@
 import os
 import airtable
+import time
 
 from gpiozero import Robot
 
