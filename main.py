@@ -5,18 +5,6 @@ import logging
 import os
 import time
 
-def pump():
-    # These numbers correspond to the pins we use on the Raspberry Pi.
-    # Only 7/8 are configured for our single-pump setup, but we have to specify both
-    r = Robot(left=(7, 8), right=(9, 10))
-    try:
-        r.backward(speed=1)
-        # Run for five seconds.
-        time.sleep(5)
-    finally:
-        r.stop()
-
-
 def check_airtable():
     base_id = os.getenv("BASE_ID")
     api_key = os.getenv("API_KEY")
@@ -36,10 +24,37 @@ def check_airtable():
         at.update(table_name, pump_record["id"], {"State": "Done"})
 
 form_page = b"""
-<html><form action=\"/\" method=\"POST\"><input type=\"submit\" value=\"Pump\"></form></body></html>
+<html>
+<head>
+<style>
+input[type="submit"]{
+    width: 100%;
+    height: 100%;
+    font-size: xxx-large;
+}
+</style>
+</head>
+<body>
+<form action=\"/\" method=\"POST\"><input type=\"submit\" value=\"Start / Stop Pump\"></form>
+</body>
+</html>
 """
 
 class Handler(BaseHTTPRequestHandler):
+    pumping = False
+    robot = None
+    def pump(self):
+        # These numbers correspond to the pins we use on the Raspberry Pi.
+        # Only 7/8 are configured for our single-pump setup, but we have to specify both
+        if not self.robot:
+            self.robot = Robot(left=(7, 8), right=(9, 10))
+        if not self.pumping:
+            self.pumping = True
+            self.robot.backward(speed=1)
+        else:
+            self.robot.stop()
+            self.pumping = False
+
     def _set_response(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -51,11 +66,10 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(form_page)
 
     def do_POST(self):
-        logging.info("POST request")
         try:
-            pump()
-        except Exception:
-            pass
+            self.pump()
+        except Exception as e:
+            print("error encountered: {}".format(e))
         self._set_response()
         self.wfile.write(form_page)
 
