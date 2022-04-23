@@ -40,15 +40,17 @@ input[type="submit"]{
 </html>
 """
 
-class Handler(BaseHTTPRequestHandler):
+class Pump:
     pumping = False
     robot = None
-    def pump(self):
-        # These numbers correspond to the pins we use on the Raspberry Pi.
-        # Only 7/8 are configured for our single-pump setup, but we have to specify both
+    def __init__(self):
         if not self.robot:
             logging.info("initializing pump...")
+            # These numbers correspond to the pins we use on the Raspberry Pi.
+            # Only 7/8 are configured for our single-pump setup, but we have to specify both
             self.robot = Robot(left=(7, 8), right=(9, 10))
+
+    def pump(self):
         if not self.pumping:
             logging.info("starting to pump...")
             self.pumping = True
@@ -60,6 +62,10 @@ class Handler(BaseHTTPRequestHandler):
             self.pumping = False
             logging.info("pump stopped")
 
+global_pump = Pump()
+
+class Handler(BaseHTTPRequestHandler):
+    
     def _set_response(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -72,7 +78,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            self.pump()
+            global_pump.pump()
         except Exception as e:
             print("error encountered: {}".format(e))
         self._set_response()
